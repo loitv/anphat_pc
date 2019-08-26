@@ -37,8 +37,8 @@ class VGAInfoAdmin(admin.ModelAdmin):
 
 @admin.register(Laptop)
 class LaptopAdmin(admin.ModelAdmin):
-    list_display = ('name', 'brand', 'serial_number', 'service_tag', 'screen_size', 'screen_type', 'screen_resolution',
-                    'cpu', 'ram', 'vga', 'os', 'pin', 'weight',)
+    list_display = ('name', 'brand', 'screen_resolution',
+                    'cpu', 'memory_type', 'memory_size', 'vga', 'os', 'pin', 'weight',)
     # list_filter = ('__all__',)
     # search_fields = ('__all__',)
     # prepopulated_fields = {'slug': ('title',)}
