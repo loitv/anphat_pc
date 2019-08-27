@@ -12,19 +12,27 @@ class BaseModel(models.Model):
 
 
 class CPUInfo(BaseModel):
-    TYPE_CHOICES = (
-        ('mobile', 'Mobile'),
-        ('laptop', 'Laptop'),
-        ('desktop', 'Desktop')
-    )
     name = models.CharField("Tên CPU", max_length=255)
-    brand = models.CharField("Hãng", max_length=255)
-    type = models.CharField("Dùng cho", max_length=32, choices=TYPE_CHOICES)
-    core = models.SmallIntegerField("Số lõi", )
-    thread = models.SmallIntegerField("Số luồng", )
-    base_freq = models.FloatField("Tần số cơ bản (GHz)", )
-    max_freq = models.FloatField("Tần số boost (GHz)", )
-    cache = models.SmallIntegerField("Kích thước bộ nhớ đệm (MB)", )
+    manufacture = models.CharField("Hãng", max_length=255, null=True)
+    series = models.CharField("Dòng", max_length=255, null=True)
+    code_name = models.CharField("Tên mã", max_length=128, null=True)
+    clock_rate = models.CharField("Xung nhịp (MHz)", max_length=128, null=True)
+    l1_cache = models.CharField(max_length=64, null=True)
+    l2_cache = models.CharField(max_length=64, null=True)
+    l3_cache = models.CharField(max_length=64, null=True)
+    core = models.SmallIntegerField("Số lõi", null=True)
+    threads = models.SmallIntegerField("Số luồng", null=True)
+    power_consumption = models.CharField("Công suất tiêu thụ (W)", max_length=128, null=True)
+    transistor_count = models.CharField("Số lượng bóng bán dẫn", max_length=128, null=True)
+    die_size = models.CharField(max_length=64, null=True)
+    technology = models.CharField('Công nghệ', max_length=64, null=True)
+    max_temp = models.CharField('Nhiệt độ tối đa', max_length=64, null=True)
+    socket = models.CharField(max_length=128, null=True)
+    features = models.TextField(null=True)
+    gpu = models.CharField("Đồ họa tích hợp", max_length=255, null=True)
+    sixty_four_bit = models.CharField("64 Bit", max_length=128, null=True)
+    announce_date = models.DateField(null=True)
+    reference_link = models.CharField("Link tham khảo", null=True, max_length=512)
 
     class Meta:
         verbose_name_plural = "CPU Spec."
