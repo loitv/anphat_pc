@@ -2,12 +2,15 @@ import requests
 import re
 import os
 import html
+import urllib.request
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+
 from .models import Laptop, VGAInfo, CPUInfo
 from logs.my_log import AnphatLogger
-from anphat_pc.settings import BASE_DIR
+from anphat_pc.settings import BASE_DIR, MEDIA_ROOT, DOWNLOAD_ROOT
 
 utils_log = AnphatLogger('AP_UTILS')
 error_urls_path = os.path.join(BASE_DIR, 'products', 'error_url.txt')
@@ -18,8 +21,15 @@ error_urls_file = open(error_urls_path, 'a')
 
 
 def test():
+    # content = '<td>08/10/2017 <script>document.write("= "+Math.round(((Date.now()-1502316000000)/1000/60/60/24))+" days old");</script>= 747 days old</td>'
+    # soup = BeautifulSoup(content, 'lxml')
+    # a = re.findall(r'\d\d/\d\d/\d\d\d\d', soup.text)[0]
+    # release_date = datetime.strptime(a, '%m/%d/%Y')
+    # print(release_date)
+
     # get_gpu_url_list()
-    crawl_cpu_spec()
+    # crawl_cpu_spec()
+    crawl_anphat_laptop('https://www.anphatpc.com.vn/laptop-dell-xps15-9570-70158746_id26442.html')
 
 
 def count_laptops():
@@ -29,7 +39,7 @@ def count_laptops():
 def get_gpu_url_list():
     url_list = []
     base_url = 'https://www.notebookcheck.net/NVIDIA-GeForce-RTX-2080-Ti-Desktop-Graphics-Card.386296.0.html'
-    r = requests.get(url=base_url)
+    r = requests.get(url=base_url, verify=False)
     soup = BeautifulSoup(r.text, 'lxml')
     classes = soup.find(id="c5498226").div.div.find_all('span')
     for cls in classes:
@@ -56,7 +66,7 @@ def get_gpu_url_list():
 
 
 def crawl_gpu_spec(url):
-    r = requests.get(url=url)
+    r = requests.get(url=url, verify=False)
     soup = BeautifulSoup(r.text, 'lxml')
 
     spec_divs = soup.find(id="content").find_all('div')
@@ -142,7 +152,7 @@ def get_gpu_use_for(lower_name):
 def crawl_cpu_spec():
     base_url = 'https://www.notebookcheck.net/Mobile-Processors-Benchmark-List.2436.0.html'
 
-    soup = BeautifulSoup(requests.get(base_url).text, 'lxml')
+    soup = BeautifulSoup(requests.get(base_url, verify=False).text, 'lxml')
     cpu_tags = soup.find(id="sortierbare_tabelle").find_all('tr', {'class': ['odd', 'even', 'desk_odd', 'desk_even',
                                                                              'smartphone_odd', 'smartphone_even']})
     html_file = open(os.path.join(BASE_DIR, 'products', 'cpu_table.html'), 'w+', encoding='utf-8')
@@ -183,7 +193,7 @@ def crawl_cpu_spec():
 
 def get_cpu_spec_from_url(url):
     print(url)
-    soup = BeautifulSoup(requests.get(url).text, 'lxml')
+    soup = BeautifulSoup(requests.get(url, verify=False).text, 'lxml')
     content_div = soup.find(id="content").find_all('div')
     count = 0
     for div in content_div:
@@ -276,3 +286,74 @@ def get_cpu_spec_from_url(url):
             continue
     if count == len(content_div):
         error_urls_file.write('CASE 2: {0}\n'.format(url))
+
+
+# -----------------------CRAWL ANPHAT LAPTOP------------------------
+def crawl_anphat_laptop(url):
+    root_url = 'https://anphatpc.com.vn'
+    soup = BeautifulSoup(requests.get(url, verify=False).text, 'lxml')
+
+    # get product image
+    image_rel_url = soup.find(id="Zoomer")['href'].strip()
+    if image_rel_url:
+        image_url = root_url + image_rel_url
+        print(image_url)
+        img_file_name = get_img_filename_from_url(image_url)
+        if img_file_name:
+            print(img_file_name)
+            # urllib.request.urlretrieve(image_url, os.path.join(MEDIA_ROOT, img_file_name))
+
+    # get product name
+    product_name = soup.find('h1', {'class': 'txt_b'}).get_text().strip()
+    if product_name:
+        print(product_name)
+        if product_name.lower().startswith('laptop '):
+            product_name = product_name[product_name.index(' ') + 1:]
+        print(product_name)
+        brand = product_name[:product_name.index(' ')]
+        print(brand)
+
+    # get product information
+    cpu, vga = None, None
+    ram, hard_disk, screen, operation_system, pin, weight = '', '', '', '', '', ''
+    product_info = soup.find(id="detail_summary")
+    if product_info:
+        spans = product_info.find_all('span', {'class': 'item'})
+        if spans:
+            for span in spans:
+                text = span.text
+                if ':' in text:
+                    field = text.split(':')[0]
+                    content = text.split(':')[1]
+                    if 'cpu' in field.lower():
+                        pass
+                    elif 'vga' in field.lower():
+                        pass
+                    elif 'ram' in field.lower():
+                        ram = content.strip()
+                    elif 'hdd' in field.lower():
+                        hard_disk = content.strip()
+                    elif 'màn hình' in field.lower():
+                        screen = content.strip()
+                    elif 'os' in field.lower():
+                        operation_system = content.strip()
+                    elif 'pin' in field.lower():
+                        pin = content.strip()
+                    elif 'cân nặng' in field.lower():
+                        weight = content.strip()
+    print(ram, hard_disk, screen, operation_system, pin, weight)
+
+
+
+
+
+def get_img_filename_from_url(url):
+    images = re.findall(r'([-\w]+\.(?:jpg|jpeg|gif|png))', url)
+    if images:
+        return images[0]
+    else:
+        return None
+
+
+def down_load_product_image(url, product_id, image_name):
+    urllib.request.urlretrieve(url, os.path.join(MEDIA_ROOT, product_id + '_' + image_name))

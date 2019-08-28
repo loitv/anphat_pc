@@ -1,4 +1,5 @@
 from django.db import models
+from anphat_pc.settings import P_STATUS_DISCONTINUE, P_STATUS_ON_SALE, P_STATUS_OUT_STOCK
 
 # Create your models here.
 
@@ -11,8 +12,21 @@ class BaseModel(models.Model):
         abstract = True
 
 
+class BaseProduct(BaseModel):
+    STATUS_CHOICES = (
+        (P_STATUS_ON_SALE, 'Còn hàng'),
+        (P_STATUS_OUT_STOCK, 'Hết hàng'),
+        (P_STATUS_DISCONTINUE, 'Ngừng phân phối'),
+    )
+    price = models.CharField("Giá", max_length=32, null=True)
+    old_price = models.CharField("Giá cũ", max_length=32, null=True)
+    status = models.SmallIntegerField("Tình trạng", choices=STATUS_CHOICES, default=P_STATUS_ON_SALE)
+    quantity = models.SmallIntegerField("Số lượng", default=1)
+
+
 class CPUInfo(BaseModel):
     name = models.CharField("Tên CPU", max_length=255)
+    non_white_space_name = models.CharField(max_length=255, null=True)
     manufacture = models.CharField("Hãng", max_length=255, null=True)
     series = models.CharField("Dòng", max_length=255, null=True)
     code_name = models.CharField("Tên mã", max_length=128, null=True)
@@ -73,8 +87,8 @@ class VGAInfo(BaseModel):
         ('unknown', 'Unknown')
     )
     name = models.CharField(max_length=255, verbose_name="Tên card")
+    non_white_space_name = models.CharField(max_length=255, null=True)
     use_type = models.CharField(max_length=16, choices=USE_FOR_CHOICES, verbose_name="Dùng cho")
-
     manufacturer = models.CharField(verbose_name="Nhà sản xuất", max_length=128, null=True)
     architecture = models.CharField(verbose_name="Kiến trúc", max_length=128, null=True)
     pipelines = models.CharField(verbose_name="Nhân CUDA", max_length=128, null=True)
@@ -145,20 +159,19 @@ class Laptop(BaseModel):
         ))
     ]
     name = models.CharField(max_length=255, verbose_name="Tên máy")
-    brand = models.CharField(max_length=255, choices=BRAND_CHOICES, verbose_name='Hãng')
-    sub_brand = models.CharField(max_length=255, null=True, choices= SUB_BRAND_CHOICES, verbose_name='Dòng máy')
+    non_white_space_name = models.CharField(max_length=255, null=True)
+    brand = models.CharField(max_length=255, verbose_name='Hãng', null=True)
+    sub_brand = models.CharField(max_length=255, null=True, verbose_name='Dòng máy')
     serial_number = models.CharField(max_length=16, blank=True, verbose_name = "Số Seri")
     service_tag = models.CharField(max_length=16, blank=True)
-    cpu = models.ForeignKey(CPUInfo, on_delete=models.CASCADE, related_name='laptops', verbose_name="CPU")
-    vga = models.ForeignKey(VGAInfo, on_delete=models.CASCADE, related_name='laptops', verbose_name="VGA")
-    memory_type = models.CharField(max_length=16, choices=RAM_TYPES, null=True, verbose_name="Loại RAM")
-    memory_size = models.SmallIntegerField(choices=MEMORY_SIZES, null=True, verbose_name="Dung lượng RAM")
-    screen_size = models.FloatField(verbose_name="Kích thước màn hình (inches)")
-    screen_panel_type = models.CharField(max_length=16, choices=SCREEN_PANEL_TYPES, null=True, verbose_name="Tấm nền")
-    screen_resolution = models.CharField(max_length=16, choices=SCREEN_RESOLUTION_CHOICES, null=True, verbose_name="Độ phân giải")
+    cpu = models.ForeignKey(CPUInfo, on_delete=models.CASCADE, related_name='laptops', verbose_name="CPU", null=True)
+    vga = models.ForeignKey(VGAInfo, on_delete=models.CASCADE, related_name='laptops', verbose_name="VGA", null=True)
+    ram = models.CharField(max_length=255, null=True, verbose_name="RAM")
+    hard_disk = models.CharField(max_length=255, null=True, verbose_name="Ổ cứng")
+    screen = models.CharField(max_length=255, null=True, verbose_name="Màn hình")
     os = models.CharField(max_length=255, verbose_name="Hệ điều hành")
-    pin = models.CharField(max_length=16, verbose_name="Pin (cell)")
-    weight = models.CharField(max_length=16, verbose_name="Khối lượng (kg)")
+    pin = models.CharField(max_length=255, verbose_name="Pin (cell)")
+    weight = models.CharField(max_length=255, verbose_name="Khối lượng (kg)")
     cover = models.ImageField(null=True, verbose_name="Ảnh sản phẩm")
 
     class Meta:

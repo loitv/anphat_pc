@@ -131,3 +131,9 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+DOWNLOAD_ROOT = os.path.join(BASE_DIR, 'download')
+
+# -------PRODUCT CONSTANT--------
+P_STATUS_ON_SALE = 0
+P_STATUS_OUT_STOCK = 1
+P_STATUS_DISCONTINUE = 2
